@@ -1,9 +1,16 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <iostream>
 #include <iomanip>
 #include <cstdlib>
 #include <limits>
-#define NOMINMAX
-#include <Windows.h> // ★ 1. 為了支援 SetConsoleOutputCP 引入此標頭檔
+#include <Windows.h> 
+
+#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
+#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+#endif
+
 #include "RentalSystem.h"
 #include "Ball.h"
 #include "Racket.h"
@@ -76,11 +83,78 @@ private:
         cin.get();
     }
 
+    // 計算 UTF-8 字串在控制台中的視覺寬度（考慮中文字為 2 欄寬度，避開 VS16 控制碼）
+    int getUTF8DisplayWidth(const string& str) const {
+        int width = 0;
+        for (size_t i = 0; i < str.length(); ) {
+            unsigned char c = str[i];
+            
+            // 排除 Variation Selector-16 (VS16): \xef\xb8\x8f (在終端機佔 0 欄寬度)
+            if (i + 2 < str.length() && 
+                (unsigned char)str[i] == 0xEF && 
+                (unsigned char)str[i+1] == 0xB8 && 
+                (unsigned char)str[i+2] == 0x8F) {
+                i += 3;
+                continue;
+            }
+
+            if (c < 0x80) {
+                if (c >= 32) width += 1;
+                i += 1;
+            } else if ((c & 0xE0) == 0xC0) {
+                width += 2;
+                i += 2;
+            } else if ((c & 0xF0) == 0xE0) {
+                width += 2;
+                i += 3;
+            } else if ((c & 0xF8) == 0xF0) {
+                width += 2; // Emojis
+                i += 4;
+            } else {
+                width += 1;
+                i += 1;
+            }
+        }
+        return width;
+    }
+
+    // 印出置中對齊的標題行
+    void printTitleLine(const string& text, const string& borderColor, const string& borderLeft = "║", const string& borderRight = "║", int innerWidth = 38) const {
+        int textWidth = getUTF8DisplayWidth(text);
+        int totalSpaces = innerWidth - textWidth;
+        if (totalSpaces < 0) totalSpaces = 0;
+        int leftSpaces = totalSpaces / 2;
+        int rightSpaces = totalSpaces - leftSpaces;
+        
+        cout << borderColor << "  " << borderLeft << Color::RESET
+             << string(leftSpaces, ' ') << Color::BOLD << text << string(rightSpaces, ' ')
+             << borderColor << borderRight << Color::RESET << "\n";
+    }
+
+    // 印出左右對齊邊框的選單項目
+    void printMenuLine(const string& num, const string& icon, const string& text, const string& borderColor, const string& borderLeft = "║", const string& borderRight = "║", int innerWidth = 38) const {
+        string plainContent = "  [" + num + "]  " + icon + "  " + text;
+        int contentWidth = getUTF8DisplayWidth(plainContent);
+        int padding = innerWidth - contentWidth - 2; // 扣除結尾的 2 個空白
+        if (padding < 0) padding = 0;
+        string padSpace(padding, ' ');
+        
+        cout << borderColor << "  " << borderLeft << Color::RESET
+             << "  " << Color::BR_YELLOW << Color::BOLD << "[" << num << "]" << Color::RESET
+             << "  " << Color::WHITE << icon << "  " << text << padSpace << "  "
+             << borderColor << borderRight << Color::RESET << "\n";
+    }
+
     // 印出標題橫幅
     void printBanner(const string& title, const string& color = Color::BR_CYAN) const {
+        int bannerInnerWidth = 54;
+        int titleWidth = getUTF8DisplayWidth(title);
+        int padding = bannerInnerWidth - titleWidth - 2;
+        if (padding < 0) padding = 0;
+        string padSpace(padding, ' ');
         cout << color << Color::BOLD
              << "\n  ╔══════════════════════════════════════════════════════╗\n"
-             << "  ║  " << left << setw(52) << title << "║\n"
+             << "  ║  " << title << padSpace << "║\n"
              << "  ╚══════════════════════════════════════════════════════╝"
              << Color::RESET << "\n\n";
     }
@@ -125,40 +199,33 @@ private:
     void displayMainMenu() const {
         clearScreen();
 
-        // ASCII Art 標題
+        // 置中對齊的主標題框
         cout << "\n";
-        cout << Color::BR_CYAN << Color::BOLD;
-        cout << "  ██████████████████████████████████████████████████████\n";
-        cout << "  ██                                                  ██\n";
-        cout << "  ██   ★  體育器材租借系統  Sports Rental v1.0  ★   ██\n";
-        cout << "  ██                                                  ██\n";
-        cout << "  ██████████████████████████████████████████████████████\n";
-        cout << Color::RESET << "\n";
+        cout << Color::BR_CYAN << Color::BOLD
+             << "  ╔══════════════════════════════════════╗\n";
+        printTitleLine("★ 體育器材租借系統 ★", Color::BR_CYAN);
+        printTitleLine("Sports Rental v1.0", Color::BR_CYAN);
+        cout << Color::BR_CYAN << Color::BOLD
+             << "  ╚══════════════════════════════════════╝\n"
+             << Color::RESET << "\n";
 
         // 選單框
         cout << Color::BOLD << Color::CYAN
-             << "  ╔══════════════════════════════════════╗\n"
-             << "  ║           ◈  主  選  單  ◈           ║\n"
+             << "  ╔══════════════════════════════════════╗\n";
+        printTitleLine("◈  主  選  單  ◈", Color::CYAN);
+        cout << Color::CYAN
              << "  ╠══════════════════════════════════════╣\n"
              << Color::RESET;
 
-        auto menuItem = [&](const string& num, const string& icon, const string& text) {
-            cout << Color::CYAN << "  ║  "
-                 << Color::BR_YELLOW << Color::BOLD << "[" << num << "]"
-                 << Color::RESET << "  "
-                 << Color::WHITE << icon << "  " << left << setw(26) << text
-                 << Color::CYAN << "║\n" << Color::RESET;
-        };
-
-        menuItem("1", "📋", "查看所有器材");
-        menuItem("2", "✅", "查看可租借器材");
+        printMenuLine("1", "📋", "查看所有器材", Color::CYAN);
+        printMenuLine("2", "✅", "查看可租借器材", Color::CYAN);
         cout << Color::CYAN << "  ╠══════════════════════════════════════╣\n" << Color::RESET;
-        menuItem("3", "⚙️ ", "器材管理");
-        menuItem("4", "🔑", "租借管理");
-        menuItem("5", "🔍", "搜尋器材");
-        menuItem("6", "📊", "統計信息");
+        printMenuLine("3", "⚙️", "器材管理", Color::CYAN);
+        printMenuLine("4", "🔑", "租借管理", Color::CYAN);
+        printMenuLine("5", "🔍", "搜尋器材", Color::CYAN);
+        printMenuLine("6", "📊", "統計信息", Color::CYAN);
         cout << Color::CYAN << "  ╠══════════════════════════════════════╣\n" << Color::RESET;
-        menuItem("7", "🚪", "退出系統");
+        printMenuLine("7", "🚪", "退出系統", Color::CYAN);
 
         cout << Color::CYAN
              << "  ╚══════════════════════════════════════╝\n"
@@ -174,22 +241,16 @@ private:
     void displayEquipmentMenu() const {
         cout << "\n"
              << Color::BOLD << Color::MAGENTA
-             << "  ┌──────────────────────────────────────┐\n"
-             << "  │          ⚙️   器 材 管 理              │\n"
+             << "  ┌──────────────────────────────────────┐\n";
+        printTitleLine("⚙️  器 材 管 理", Color::MAGENTA, "│", "│");
+        cout << Color::BOLD << Color::MAGENTA
              << "  ├──────────────────────────────────────┤\n"
              << Color::RESET;
 
-        auto subItem = [&](const string& num, const string& text) {
-            cout << Color::MAGENTA << "  │  "
-                 << Color::BR_YELLOW << "[" << num << "]"
-                 << Color::RESET << "  " << Color::WHITE << left << setw(29) << text
-                 << Color::MAGENTA << "  │\n" << Color::RESET;
-        };
-
-        subItem("1", "➕  添加新器材");
-        subItem("2", "✏️   編輯器材");
-        subItem("3", "🗑️   刪除器材");
-        subItem("4", "◄   返回主選單");
+        printMenuLine("1", "➕", "添加新器材", Color::MAGENTA, "│", "│");
+        printMenuLine("2", "✏️", "編輯器材", Color::MAGENTA, "│", "│");
+        printMenuLine("3", "🗑️", "刪除器材", Color::MAGENTA, "│", "│");
+        printMenuLine("4", "◄", "返回主選單", Color::MAGENTA, "│", "│");
 
         cout << Color::MAGENTA
              << "  └──────────────────────────────────────┘\n"
@@ -201,23 +262,17 @@ private:
     void displayRentalMenu() const {
         cout << "\n"
              << Color::BOLD << Color::BLUE
-             << "  ┌──────────────────────────────────────┐\n"
-             << "  │          🔑  租 借 管 理              │\n"
+             << "  ┌──────────────────────────────────────┐\n";
+        printTitleLine("🔑  租 借 管 理", Color::BLUE, "│", "│");
+        cout << Color::BOLD << Color::BLUE
              << "  ├──────────────────────────────────────┤\n"
              << Color::RESET;
 
-        auto subItem = [&](const string& num, const string& text) {
-            cout << Color::BLUE << "  │  "
-                 << Color::BR_YELLOW << "[" << num << "]"
-                 << Color::RESET << "  " << Color::WHITE << left << setw(29) << text
-                 << Color::BLUE << "  │\n" << Color::RESET;
-        };
-
-        subItem("1", "📤  租借器材");
-        subItem("2", "📥  歸還器材");
-        subItem("3", "📜  查看所有租借紀錄");
-        subItem("4", "👤  查看用戶租借紀錄");
-        subItem("5", "◄   返回主選單");
+        printMenuLine("1", "📤", "租借器材", Color::BLUE, "│", "│");
+        printMenuLine("2", "📥", "歸還器材", Color::BLUE, "│", "│");
+        printMenuLine("3", "📜", "查看所有租借紀錄", Color::BLUE, "│", "│");
+        printMenuLine("4", "👤", "查看用戶租借紀錄", Color::BLUE, "│", "│");
+        printMenuLine("5", "◄", "返回主選單", Color::BLUE, "│", "│");
 
         cout << Color::BLUE
              << "  └──────────────────────────────────────┘\n"
@@ -229,22 +284,16 @@ private:
     void displayAddEquipmentMenu() const {
         cout << "\n"
              << Color::BOLD << Color::GREEN
-             << "  ┌──────────────────────────────────────┐\n"
-             << "  │          ➕  選 擇 器 材 類 型        │\n"
+             << "  ┌──────────────────────────────────────┐\n";
+        printTitleLine("➕  選 擇 器 材 類 型", Color::GREEN, "│", "│");
+        cout << Color::BOLD << Color::GREEN
              << "  ├──────────────────────────────────────┤\n"
              << Color::RESET;
 
-        auto subItem = [&](const string& num, const string& text) {
-            cout << Color::GREEN << "  │  "
-                 << Color::BR_YELLOW << "[" << num << "]"
-                 << Color::RESET << "  " << Color::WHITE << left << setw(29) << text
-                 << Color::GREEN << "  │\n" << Color::RESET;
-        };
-
-        subItem("1", "⚽  球類器材");
-        subItem("2", "🏓  拍類器材");
-        subItem("3", "🦺  保護裝備");
-        subItem("4", "◄   返回");
+        printMenuLine("1", "⚽", "球類器材", Color::GREEN, "│", "│");
+        printMenuLine("2", "🏓", "拍類器材", Color::GREEN, "│", "│");
+        printMenuLine("3", "🦺", "保護裝備", Color::GREEN, "│", "│");
+        printMenuLine("4", "◄", "返回", Color::GREEN, "│", "│");
 
         cout << Color::GREEN
              << "  └──────────────────────────────────────┘\n"
@@ -392,21 +441,15 @@ private:
         printBanner("🔍  搜尋器材", Color::BR_YELLOW);
 
         cout << Color::BOLD << Color::YELLOW
-             << "  ┌──────────────────────────────────────┐\n"
-             << "  │            🔍  搜 尋 方 式            │\n"
+             << "  ┌──────────────────────────────────────┐\n";
+        printTitleLine("🔍  搜 尋 方 式", Color::YELLOW, "│", "│");
+        cout << Color::BOLD << Color::YELLOW
              << "  ├──────────────────────────────────────┤\n"
              << Color::RESET;
 
-        auto subItem = [&](const string& num, const string& text) {
-            cout << Color::YELLOW << "  │  "
-                 << Color::BR_YELLOW << "[" << num << "]"
-                 << Color::RESET << "  " << Color::WHITE << left << setw(29) << text
-                 << Color::YELLOW << "  │\n" << Color::RESET;
-        };
-
-        subItem("1", "🔤  依名稱搜尋");
-        subItem("2", "🏷️   依分類搜尋");
-        subItem("3", "◄   返回");
+        printMenuLine("1", "🔤", "依名稱搜尋", Color::YELLOW, "│", "│");
+        printMenuLine("2", "🏷️", "依分類搜尋", Color::YELLOW, "│", "│");
+        printMenuLine("3", "◄", "返回", Color::YELLOW, "│", "│");
 
         cout << Color::YELLOW
              << "  └──────────────────────────────────────┘\n"
@@ -426,21 +469,15 @@ private:
         } else if (choice == 2) {
             cout << "\n"
                  << Color::BOLD << Color::YELLOW
-                 << "  ┌──────────────────────────────────────┐\n"
-                 << "  │            🏷️   選 擇 分 類            │\n"
+                 << "  ┌──────────────────────────────────────┐\n";
+            printTitleLine("🏷️  選 擇 分 類", Color::YELLOW, "│", "│");
+            cout << Color::BOLD << Color::YELLOW
                  << "  ├──────────────────────────────────────┤\n"
                  << Color::RESET;
 
-            auto catItem = [&](const string& num, const string& text) {
-                cout << Color::YELLOW << "  │  "
-                     << Color::BR_YELLOW << "[" << num << "]"
-                     << Color::RESET << "  " << Color::WHITE << left << setw(29) << text
-                     << Color::YELLOW << "  │\n" << Color::RESET;
-            };
-
-            catItem("1", "⚽  球類");
-            catItem("2", "🏓  拍類");
-            catItem("3", "🦺  保護裝備");
+            printMenuLine("1", "⚽", "球類", Color::YELLOW, "│", "│");
+            printMenuLine("2", "🏓", "拍類", Color::YELLOW, "│", "│");
+            printMenuLine("3", "🦺", "保護裝備", Color::YELLOW, "│", "│");
 
             cout << Color::YELLOW
                  << "  └──────────────────────────────────────┘\n"
