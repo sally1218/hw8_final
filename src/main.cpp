@@ -629,7 +629,8 @@ public:
 };
 
 int main() {
-    // ★ 2. 在程式一啟動時，將控制台輸出編碼改為 UTF-8
+    // 設定控制台輸入與輸出編碼均為 UTF-8，解決中文輸入與輸出亂碼問題
+    SetConsoleCP(65001);
     SetConsoleOutputCP(65001);
 
     try {
