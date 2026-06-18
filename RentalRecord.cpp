@@ -1,4 +1,4 @@
-#include "../include/RentalRecord.h"
+#include "RentalRecord.h"
 #include <iostream>
 
 using namespace std;

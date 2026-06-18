@@ -1,4 +1,4 @@
-#include "../include/ProtectiveGear.h"
+#include "ProtectiveGear.h"
 #include <iostream>
 
 using namespace std;

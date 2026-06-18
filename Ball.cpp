@@ -1,4 +1,4 @@
-#include "../include/Ball.h"
+#include "Ball.h"
 #include <iostream>
 
 using namespace std;

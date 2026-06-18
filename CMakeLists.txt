@@ -5,17 +5,17 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 添加包含目錄
-include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR})
 
 # 源文件
 set(SOURCES
-    src/main.cpp
-    src/Equipment.cpp
-    src/Ball.cpp
-    src/Racket.cpp
-    src/ProtectiveGear.cpp
-    src/RentalRecord.cpp
-    src/RentalSystem.cpp
+    main.cpp
+    Equipment.cpp
+    Ball.cpp
+    Racket.cpp
+    ProtectiveGear.cpp
+    RentalRecord.cpp
+    RentalSystem.cpp
 )
 
 # 創建可執行文件

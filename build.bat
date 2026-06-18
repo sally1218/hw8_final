@@ -12,13 +12,13 @@ if %errorlevel% equ 0 (
     echo 偵測到 MinGW/g++，正在使用 g++ 編譯...
     if not exist obj mkdir obj
     
-    g++ -std=c++17 -Wall -Wextra -I./include -c ./src/main.cpp -o ./obj/main.o
-    g++ -std=c++17 -Wall -Wextra -I./include -c ./src/Equipment.cpp -o ./obj/Equipment.o
-    g++ -std=c++17 -Wall -Wextra -I./include -c ./src/Ball.cpp -o ./obj/Ball.o
-    g++ -std=c++17 -Wall -Wextra -I./include -c ./src/Racket.cpp -o ./obj/Racket.o
-    g++ -std=c++17 -Wall -Wextra -I./include -c ./src/ProtectiveGear.cpp -o ./obj/ProtectiveGear.o
-    g++ -std=c++17 -Wall -Wextra -I./include -c ./src/RentalRecord.cpp -o ./obj/RentalRecord.o
-    g++ -std=c++17 -Wall -Wextra -I./include -c ./src/RentalSystem.cpp -o ./obj/RentalSystem.o
+    g++ -std=c++17 -Wall -Wextra -I. -c ./main.cpp -o ./obj/main.o
+    g++ -std=c++17 -Wall -Wextra -I. -c ./Equipment.cpp -o ./obj/Equipment.o
+    g++ -std=c++17 -Wall -Wextra -I. -c ./Ball.cpp -o ./obj/Ball.o
+    g++ -std=c++17 -Wall -Wextra -I. -c ./Racket.cpp -o ./obj/Racket.o
+    g++ -std=c++17 -Wall -Wextra -I. -c ./ProtectiveGear.cpp -o ./obj/ProtectiveGear.o
+    g++ -std=c++17 -Wall -Wextra -I. -c ./RentalRecord.cpp -o ./obj/RentalRecord.o
+    g++ -std=c++17 -Wall -Wextra -I. -c ./RentalSystem.cpp -o ./obj/RentalSystem.o
     
     echo 正在鏈結目標檔案...
     g++ -o ./rental_system.exe ./obj/*.o
@@ -29,7 +29,7 @@ REM 偵測是否已在 MSVC 環境中 (cl)
 where cl >nul 2>&1
 if %errorlevel% equ 0 (
     echo 偵測到 MSVC 環境，正在編譯...
-    cl.exe /utf-8 /EHsc /std:c++17 /Iinclude src/main.cpp src/Equipment.cpp src/Ball.cpp src/Racket.cpp src/ProtectiveGear.cpp src/RentalRecord.cpp src/RentalSystem.cpp /Fe:rental_system.exe
+    cl.exe /utf-8 /EHsc /std:c++17 /I. main.cpp Equipment.cpp Ball.cpp Racket.cpp ProtectiveGear.cpp RentalRecord.cpp RentalSystem.cpp /Fe:rental_system.exe
     goto check_result
 )
 
@@ -47,7 +47,7 @@ if defined VS_PATH (
     call "%VS_PATH%\Common7\Tools\VsDevCmd.bat" >nul
     
     echo 正在使用 MSVC (cl.exe) 編譯...
-    cl.exe /utf-8 /EHsc /std:c++17 /Iinclude src/main.cpp src/Equipment.cpp src/Ball.cpp src/Racket.cpp src/ProtectiveGear.cpp src/RentalRecord.cpp src/RentalSystem.cpp /Fe:rental_system.exe
+    cl.exe /utf-8 /EHsc /std:c++17 /I. main.cpp Equipment.cpp Ball.cpp Racket.cpp ProtectiveGear.cpp RentalRecord.cpp RentalSystem.cpp /Fe:rental_system.exe
     
     REM 清除 MSVC 產生的 .obj 暫存檔
     del /f /q *.obj >nul 2>&1

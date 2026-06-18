@@ -1,7 +1,7 @@
-#include "../include/RentalSystem.h"
-#include "../include/Ball.h"
-#include "../include/Racket.h"
-#include "../include/ProtectiveGear.h"
+#include "RentalSystem.h"
+#include "Ball.h"
+#include "Racket.h"
+#include "ProtectiveGear.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>

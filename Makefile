@@ -2,14 +2,14 @@
 
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra
-INCLUDE = -Iinclude
+INCLUDE = -I.
 
-SRCDIR = src
+SRCDIR = .
 OBJDIR = obj
 BINDIR = .
 
-SOURCES = $(wildcard $(SRCDIR)/*.cpp)
-OBJECTS = $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SOURCES))
+SOURCES = $(wildcard *.cpp)
+OBJECTS = $(patsubst %.cpp, $(OBJDIR)/%.o, $(SOURCES))
 TARGET = $(BINDIR)/rental_system
 
 all: $(TARGET)
@@ -19,7 +19,7 @@ $(TARGET): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 	@echo "編譯完成！可執行文件: $(TARGET)"
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+$(OBJDIR)/%.o: %.cpp
 	@mkdir -p $(OBJDIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -o $@
 
