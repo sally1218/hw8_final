@@ -21,6 +21,133 @@
 └─────────────────────────────────────────────┘
 ```
 
+---
+
+## 🗂️ UML 類別關係圖
+
+```mermaid
+classDiagram
+    direction TB
+
+    class Equipment {
+        <<abstract>>
+        #int id
+        #string name
+        #string category
+        #double rentalPrice
+        #bool isAvailable
+        #string description
+        +displayInfo() void*
+        +getDetails() string*
+        +setAvailability(bool) void*
+        +getId() int
+        +getName() string
+        +getRentalPrice() double
+        +getAvailability() bool
+        +setName(string) void
+        +setRentalPrice(double) void
+    }
+
+    class Ball {
+        -string ballType
+        -string material
+        -double weight
+        +displayInfo() void
+        +getDetails() string
+        +getBallType() string
+        +getMaterial() string
+        +getWeight() double
+    }
+
+    class Racket {
+        -string racketType
+        -string frameSize
+        -string stringTension
+        +displayInfo() void
+        +getDetails() string
+        +getRacketType() string
+        +getFrameSize() string
+        +getStringTension() string
+    }
+
+    class ProtectiveGear {
+        -string gearType
+        -string size
+        -string color
+        +displayInfo() void
+        +getDetails() string
+        +getGearType() string
+        +getSize() string
+        +getColor() string
+    }
+
+    class RentalRecord {
+        -int recordId
+        -int equipmentId
+        -string equipmentName
+        -string renterName
+        -string rentalDate
+        -string returnDate
+        -int rentalDays
+        -double totalCost
+        -bool isReturned
+        +displayRecord() void
+        +toFileFormat() string
+        +getRecordId() int
+        +getEquipmentId() int
+        +getRenterName() string
+        +getTotalCost() double
+        +getIsReturned() bool
+        +setIsReturned(bool) void
+        +setTotalCost(double) void
+    }
+
+    class RentalSystem {
+        -vector~shared_ptr~Equipment~~ equipment
+        -vector~RentalRecord~ rentalRecords
+        -string dataDirectory
+        -int nextEquipmentId
+        -int nextRecordId
+        +initialize() void
+        +addEquipment(shared_ptr~Equipment~) void
+        +displayAllEquipment() void
+        +displayAvailableEquipment() void
+        +findEquipmentById(int) shared_ptr~Equipment~
+        +deleteEquipment(int) bool
+        +editEquipment(int) void
+        +rentEquipment(int, string, int) void
+        +returnEquipment(int) void
+        +displayRentalRecords() void
+        +displayStatistics() void
+        +calculateRevenue() double
+        +searchEquipmentByName(string) void
+        +searchEquipmentByCategory(string) void
+        +saveAllData() void
+        +loadAllData() void
+        -calculateDaysDifference(string, string) int
+    }
+
+    %% 繼承關係（Inheritance）
+    Equipment <|-- Ball          : 繼承 ▲
+    Equipment <|-- Racket        : 繼承 ▲
+    Equipment <|-- ProtectiveGear : 繼承 ▲
+
+    %% 組合關係（Composition）
+    RentalSystem "1" *-- "0..*" Equipment    : 組合 ◆ 管理所有器材
+    RentalSystem "1" *-- "0..*" RentalRecord : 組合 ◆ 管理所有紀錄
+
+    %% 依賴關係（Dependency）
+    RentalRecord ..> Equipment : 依賴 ‥ 參考 equipmentId
+```
+
+| 符號 | 關係 | 說明 |
+|------|------|------|
+| `<\|--` 實線三角 | **繼承** | Ball / Racket / ProtectiveGear → Equipment |
+| `*--` 實心菱形 | **組合** | RentalSystem 擁有並管理子物件 |
+| `..>` 虛線箭頭 | **依賴** | RentalRecord 透過 `equipmentId` 參考 Equipment |
+
+---
+
 ## 📦 組件設計
 
 ### 1. 領域模型層（Domain Model Layer）
