@@ -1,0 +1,41 @@
+# Executables
+*.exe
+*.out
+*.app
+
+# Windows batch scripts
+*.bat
+
+# Build directories and build files
+[Bb]uild/
+Makefile.co*
+*.o
+*.obj
+*.gch
+*.pdb
+*.ilk
+
+# Log files
+*.log
+
+# IDEs and editors
+.vscode/
+.vs/
+.idea/
+*.suo
+*.user
+*.userossc
+*.sln
+*.vcxproj
+*.filters
+
+# Build outputs
+obj/
+out/
+[Bb]uild/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+
+# Data backups or dynamic CSV files if desired, but let's keep CSV files unless they are user data.
+# In C++ projects, equipment.csv and rental_records.csv are initial data, we can keep them in repo.
